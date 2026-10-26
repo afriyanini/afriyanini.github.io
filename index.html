@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="id" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NINI.NET</title>
+  <meta name="description" content="Portofolio Interaktif 3D Scrollytelling Nini Afriyani — Guru Matematika & Informatika | Konten Kreator." />
+
+  <!-- Google Fonts: Orbitron, Syne (Display Sans-Serif) & JetBrains Mono, Space Mono (Technical Monospace) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;0,800;1,400&family=Orbitron:wght@500;600;700;800;900&family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            void: '#0A0408',
+            crimson: '#FF2E93',
+            blush: '#FF85C0',
+            petal: '#FFB8DE',
+            crimsonDark: '#7A1248',
+            silver: '#C9A7B8',
+          },
+          fontFamily: {
+            display: ['Orbitron', 'Syne', 'sans-serif'],
+            syne: ['Syne', 'Orbitron', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Space Mono', 'monospace'],
+          },
+          boxShadow: {
+            neon: '0 0 22px rgba(255, 46, 147, 0.45), inset 0 0 15px rgba(255, 133, 192, 0.18)',
+            neonStrong: '0 0 36px rgba(255, 46, 147, 0.78), inset 0 0 22px rgba(255, 184, 222, 0.3)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Three.js & GSAP + ScrollTrigger + ScrollToPlugin CDNs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+
+  <style>
+    :root {
+      --bg-void: #0A0408;
+      --accent-pink: #FF2E93;
+      --accent-blush: #FF85C0;
+      --accent-petal: #FFB8DE;
+      --text-main: #FFF7FB;
+      --text-muted: #C9A7B8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Hide native scrollbar in favor of Custom 3D Flip Scrollbar */
+    html {
+      background-color: var(--bg-void);
+      color: var(--text-main);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    html::-webkit-scrollbar {
+      display: none;
+    }
+
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      overflow-x: hidden;
+      selection-background-color: #FF2E93;
+      selection-color: #0A0408;
+    }
+
+    ::selection {
+      background: #FF2E93;
+      color: #0A0408;
+    }
+
+    /* Fixed WebGL Viewport */
+    #webgl-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Subtle Feminine Cyber-Rose Scanline & Soft Ambient Vignette Overlay */
+    .hud-overlay-fx {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(255, 46, 147, 0.05) 0%, rgba(10, 4, 8, 0) 45%, rgba(10, 4, 8, 0.84) 100%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 184, 222, 0.015) 0px,
+          rgba(255, 184, 222, 0.015) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+    }
+
+    /* Rose Quartz HUD Panels & Corner Brackets */
+    .hud-panel {
+      position: relative;
+      background: linear-gradient(135deg, rgba(28, 9, 21, 0.82) 0%, rgba(12, 4, 9, 0.74) 100%);
+      border: 1px solid rgba(255, 92, 170, 0.32);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .hud-panel:hover {
+      border-color: rgba(255, 133, 192, 0.85);
+      box-shadow: 0 0 30px rgba(255, 46, 147, 0.25), inset 0 0 20px rgba(255, 133, 192, 0.1);
+    }
+
+    .hud-corner::before,
+    .hud-corner::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-color: #FF85C0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+    .hud-corner::before {
+      top: -1px;
+      left: -1px;
+      border-top: 2px solid #FF2E93;
+      border-left: 2px solid #FF2E93;
+    }
+    .hud-corner::after {
+      bottom: -1px;
+      right: -1px;
+      border-bottom: 2px solid #FF85C0;
+      border-right: 2px solid #FF85C0;
+    }
+
+    /* 3D Flip Scrollbar (Right Side) */
+    .flip-stage {
+      perspective: 700px;
+    }
+    .flip-cube {
+      position: relative;
+      width: 54px;
+      height: 54px;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .flip-face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(24, 6, 18, 0.94);
+      border: 1px solid #FF2E93;
+      box-shadow: 0 0 18px rgba(255, 46, 147, 0.45), inset 0 0 12px rgba(255, 133, 192, 0.25);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .flip-face.front {
+      transform: rotateX(0deg) translateZ(27px);
+    }
+    .flip-face.bottom {
+      transform: rotateX(-90deg) translateZ(27px);
+    }
+    .flip-face.back {
+      transform: rotateX(-180deg) translateZ(27px);
+    }
+    .flip-face.top {
+      transform: rotateX(90deg) translateZ(27px);
+    }
+
+    /* 3D Flip Card for Skills */
+    .skill-card-perspective {
+      perspective: 1200px;
+    }
+    .skill-card-inner {
+      position: relative;
+      width: 100%;
+      min-height: 250px;
+      transform-style: preserve-3d;
+      transition: transform 0.75s cubic-bezier(0.2, 0.85, 0.3, 1.05);
+    }
+    .skill-card-perspective:hover .skill-card-inner,
+    .skill-card-perspective.flipped .skill-card-inner {
+      transform: rotateY(180deg);
+    }
+    .skill-card-front,
+    .skill-card-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .skill-card-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Glowing text utilities (Rose & Pearl Pink) */
+    .text-glow-red {
+      text-shadow: 0 0 18px rgba(255, 46, 147, 0.7), 0 0 36px rgba(255, 133, 192, 0.38);
+    }
+    .text-glow-white {
+      text-shadow: 0 0 22px rgba(255, 184, 222, 0.4);
+    }
+
+    /* Animated HUD Progress Bar Stripes (Pink Gradient) */
+    .hud-bar-fill {
+      background: linear-gradient(90deg, #9D174D 0%, #FF2E93 65%, #FFB8DE 100%);
+      box-shadow: 0 0 16px rgba(255, 46, 147, 0.85);
+      position: relative;
+      overflow: hidden;
+    }
+    .hud-bar-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.22) 0px,
+        rgba(255, 255, 255, 0.22) 6px,
+        transparent 6px,
+        transparent 12px
+      );
+      animation: moveStripes 1.2s linear infinite;
+    }
+    @keyframes moveStripes {
+      0% { background-position: 0 0; }
+      100% { background-position: 24px 0; }
+    }
+
+    /* Active nav button */
+    .nav-btn.active {
+      color: #FFFFFF;
+      border-color: #FF2E93;
+      background: linear-gradient(135deg, rgba(255, 46, 147, 0.28) 0%, rgba(255, 133, 192, 0.14) 100%);
+      box-shadow: 0 0 16px rgba(255, 46, 147, 0.4);
+    }
+
+    /* Custom Reticle Cursor (Desktop) */
+    @media (pointer: fine) {
+      #cursor-reticle {
+        display: block;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-void text-white antialiased selection:bg-crimson selection:text-void">
+
+  <!-- ===================================================================== -->
+  <!-- 3D WEBGL CANVAS BACKGROUND                                            -->
+  <!-- ===================================================================== -->
+  <div id="webgl-container" aria-hidden="true"></div>
+  <div class="hud-overlay-fx" aria-hidden="true"></div>
+
+  <!-- Custom Sci-Fi Rose Reticle Cursor -->
+  <div id="cursor-reticle" class="hidden fixed top-0 left-0 w-8 h-8 pointer-events-none z-50 -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out">
+    <div class="w-full h-full border border-blush/70 rounded-full flex items-center justify-center shadow-[0_0_12px_rgba(255,46,147,0.35)]">
+      <div class="w-1.5 h-1.5 bg-crimson rounded-full shadow-[0_0_10px_#FF2E93]"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TOP TERMINAL HUD NAVIGATION ("NINI.NETWORK")                          -->
+  <!-- ===================================================================== -->
+  <header class="fixed top-0 left-0 right-0 z-40 px-3 sm:px-6 py-3">
+    <div class="max-w-7xl mx-auto hud-panel hud-corner px-4 py-2.5 flex flex-col lg:flex-row items-center justify-between gap-2.5">
+      <!-- Brand Terminal Identity -->
+      <div class="flex items-center justify-between w-full lg:w-auto gap-4">
+        <a href="#about" data-target="#about" class="nav-link group flex items-center gap-3 focus:outline-none">
+          <span class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blush opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-crimson shadow-[0_0_12px_#FF2E93]"></span>
+          </span>
+          <div class="flex flex-col">
+            <span class="font-display font-bold tracking-[0.2em] text-sm sm:text-base text-white group-hover:text-blush transition-colors">
+              NINI<span class="text-crimson">.NETWORK</span>
+            </span>
+            <span class="text-[10px] text-silver tracking-widest uppercase">
+              ROSE.CYBER_OS // VER 3.5
+            </span>
+          </div>
+        </a>
+
+        <!-- Live Telemetry Readout (Mobile & Desktop) -->
+        <div class="flex items-center gap-3 border-l border-crimson/35 pl-3 text-[11px] font-mono text-silver">
+          <div>
+            <span class="text-blush">Z:</span>
+            <span id="hud-z-coord" class="text-white font-semibold">000.0</span>m
+          </div>
+          <div class="hidden sm:block">
+            <span class="text-blush">SEC:</span>
+            <span id="hud-sec-name" class="text-petal">TORUS_CORE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Section Jump Buttons -->
+      <nav aria-label="Navigasi Utama" class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 w-full lg:w-auto">
+        <button data-target="#about" class="nav-btn active px-2.5 py-1 text-[11px] sm:text-xs font-mono tracking-wider text-silver hover:text-white border border-crimson/35 hover:border-blush transition-all">
+          [01 ABOUT]
+        </button>
+        <button data-target="#skills" class="nav-btn px-2.5 py-1 text-[11px] sm:text-xs font-mono tracking-wider text-silver hover:text-white border border-crimson/35 hover:border-blush transition-all">
+          [02 SKILLS]
+        </button>
+        <button data-target="#experience" class="nav-btn px-2.5 py-1 text-[11px] sm:text-xs font-mono tracking-wider text-silver hover:text-white border border-crimson/35 hover:border-blush transition-all">
+          [03 EXPERIENCE]
+        </button>
+        <button data-target="#education" class="nav-btn px-2.5 py-1 text-[11px] sm:text-xs font-mono tracking-wider text-silver hover:text-white border border-crimson/35 hover:border-blush transition-all">
+          [04 EDUCATION]
+        </button>
+        <button data-target="#contact" class="nav-btn px-2.5 py-1 text-[11px] sm:text-xs font-mono tracking-wider text-silver hover:text-white border border-crimson/35 hover:border-blush transition-all">
+          [05 CONTACT]
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- CUSTOM 3D FLIP SCROLLBAR (RIGHT SIDE OF SCREEN)                       -->
+  <!-- ===================================================================== -->
+  <aside aria-label="Indikator Section 3D" class="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-3 select-none">
+    <!-- Top Label -->
+    <div class="text-[10px] font-mono tracking-[0.25em] text-silver uppercase">
+      SEC
+    </div>
+
+    <!-- 3D Flipping Number Cube (01 to 05) -->
+    <div class="flip-stage" title="Indikator Section Aktif (3D Flip)">
+      <div id="scrollbar-flip-cube" class="flip-cube">
+        <div class="flip-face front">
+          <span class="text-[9px] text-silver tracking-widest">IDX</span>
+          <span id="flip-face-0" class="font-display font-extrabold text-lg text-blush text-glow-red leading-none">01</span>
+        </div>
+        <div class="flip-face bottom">
+          <span class="text-[9px] text-silver tracking-widest">IDX</span>
+          <span id="flip-face-1" class="font-display font-extrabold text-lg text-blush text-glow-red leading-none">02</span>
+        </div>
+        <div class="flip-face back">
+          <span class="text-[9px] text-silver tracking-widest">IDX</span>
+          <span id="flip-face-2" class="font-display font-extrabold text-lg text-blush text-glow-red leading-none">03</span>
+        </div>
+        <div class="flip-face top">
+          <span class="text-[9px] text-silver tracking-widest">IDX</span>
+          <span id="flip-face-3" class="font-display font-extrabold text-lg text-blush text-glow-red leading-none">04</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vertical Progress Track + Section Node Ticks -->
+    <div class="relative h-44 sm:h-56 w-6 flex items-center justify-center">
+      <!-- Track Line -->
+      <div class="w-[2px] h-full bg-blush/20 relative overflow-hidden">
+        <div id="scrollbar-progress-fill" class="w-full bg-gradient-to-b from-crimson via-blush to-petal shadow-[0_0_12px_#FF2E93] origin-top" style="height: 0%;"></div>
+      </div>
+
+      <!-- Section Tick Dots (01..05) -->
+      <div class="absolute inset-0 flex flex-col justify-between items-center py-0.5">
+        <button data-target="#about" class="scroll-tick group flex items-center gap-1.5 focus:outline-none" title="01 ABOUT">
+          <span class="w-2.5 h-2.5 rotate-45 border border-petal bg-crimson shadow-[0_0_10px_#FF2E93] transition-all"></span>
+        </button>
+        <button data-target="#skills" class="scroll-tick group flex items-center gap-1.5 focus:outline-none" title="02 SKILLS">
+          <span class="w-2 h-2 rotate-45 border border-blush/60 bg-void transition-all"></span>
+        </button>
+        <button data-target="#experience" class="scroll-tick group flex items-center gap-1.5 focus:outline-none" title="03 EXPERIENCE">
+          <span class="w-2 h-2 rotate-45 border border-blush/60 bg-void transition-all"></span>
+        </button>
+        <button data-target="#education" class="scroll-tick group flex items-center gap-1.5 focus:outline-none" title="04 EDUCATION">
+          <span class="w-2 h-2 rotate-45 border border-blush/60 bg-void transition-all"></span>
+        </button>
+        <button data-target="#contact" class="scroll-tick group flex items-center gap-1.5 focus:outline-none" title="05 CONTACT">
+          <span class="w-2 h-2 rotate-45 border border-blush/60 bg-void transition-all"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Total Percentage Readout -->
+    <div id="scrollbar-pct" class="text-[11px] font-mono text-blush font-bold tracking-wider">
+      00%
+    </div>
+  </aside>
+
+  <!-- ===================================================================== -->
+  <!-- BOTTOM TELEMETRY BAR                                                  -->
+  <!-- ===================================================================== -->
+  <div class="fixed bottom-3 left-3 sm:left-6 right-16 sm:right-20 z-30 pointer-events-none hidden sm:flex items-center justify-between text-[11px] font-mono text-silver/90">
+    <div class="flex items-center gap-4 bg-void/80 border border-crimson/30 px-3 py-1 backdrop-blur-md">
+      <span class="text-blush font-bold">// SCENE_TELEMETRY</span>
+      <span id="telemetry-scene-desc">SCENE 01: TOROIDAL ROSE PARTICLE RING</span>
+    </div>
+    <div class="flex items-center gap-4 bg-void/80 border border-crimson/30 px-3 py-1 backdrop-blur-md">
+      <span>SCROLL TO FLY THROUGH</span>
+      <span class="text-blush animate-pulse">▼</span>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN SCROLLYTELLING CONTENT (5 SECTIONS)                              -->
+  <!-- ===================================================================== -->
+  <main class="relative z-10 pr-10 sm:pr-16">
+
+    <!-- =================================================================== -->
+    <!-- SECTION 01: HERO & TENTANG SAYA (Toroidal Rose Particle Ring)       -->
+    <!-- =================================================================== -->
+    <section id="about" data-section-index="1" class="min-h-screen w-full flex items-center justify-center py-28 px-4 sm:px-8 lg:px-16">
+      <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        <!-- Left / Center Hero Headline -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="inline-flex items-center gap-2.5 px-3 py-1 border border-blush/50 bg-crimson/15 text-petal text-xs font-mono tracking-[0.2em] uppercase">
+            <span class="w-2 h-2 bg-crimson rounded-full animate-ping"></span>
+            <span>[01 // PROFILE IDENTITY INITIALIZED]</span>
+          </div>
+
+          <h1 class="font-display font-black text-4xl sm:text-6xl xl:text-7xl tracking-wider uppercase text-white text-glow-white leading-[1.08]">
+            NINI <span class="text-transparent bg-clip-text bg-gradient-to-r from-crimson via-blush to-petal text-glow-red">AFRIYANI</span>
+          </h1>
+
+          <div class="hud-panel hud-corner p-3.5 sm:p-4 border-l-4 border-l-crimson inline-block">
+            <p class="font-mono font-bold text-xs sm:text-sm md:text-base tracking-[0.15em] text-petal uppercase">
+              GURU MATEMATIKA &amp; INFORMATIKA <span class="text-crimson">|</span> KONTEN KREATOR
+            </p>
+          </div>
+
+          <!-- Tentang Saya Card -->
+          <div class="hud-panel hud-corner p-6 sm:p-8 space-y-4 max-w-2xl">
+            <div class="flex items-center justify-between border-b border-crimson/30 pb-2.5 text-xs font-mono text-silver">
+              <span class="text-blush font-semibold">// TENTANG SAYA (BIO_DATA.LOG)</span>
+              <span class="text-petal">STATUS: ACTIVE_EDUCATOR</span>
+            </div>
+            <p class="text-sm sm:text-base md:text-lg text-white/95 leading-relaxed font-mono font-normal">
+              Halo, saya seorang Guru Matematika dan Informatika yang percaya bahwa belajar tidak harus rumit. Selain mengajar di kelas, saya juga aktif sebagai konten kreator yang membagikan wawasan seputar matematika, teknologi, kecerdasan buatan, dan keterampilan digital agar proses belajar menjadi lebih praktis, menyenangkan, dan berdampak bagi banyak orang.
+            </p>
+            <div class="pt-2 flex flex-wrap items-center gap-3 text-xs font-mono text-silver">
+              <span class="px-2.5 py-1 bg-crimson/20 border border-blush/50 text-petal">#Matematika</span>
+              <span class="px-2.5 py-1 bg-crimson/20 border border-blush/50 text-petal">#Informatika</span>
+              <span class="px-2.5 py-1 bg-crimson/20 border border-blush/50 text-petal">#KecerdasanBuatan</span>
+              <span class="px-2.5 py-1 bg-crimson/20 border border-blush/50 text-petal">#KontenKreator</span>
+            </div>
+          </div>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-wrap items-center gap-4 pt-2">
+            <button data-target="#skills" class="nav-btn px-6 py-3 bg-gradient-to-r from-crimson to-blush hover:from-pink-600 hover:to-pink-400 text-white font-display font-bold text-xs sm:text-sm tracking-[0.2em] uppercase shadow-neon hover:shadow-neonStrong transition-all flex items-center gap-3">
+              <span>JELAJAHI SISTEM</span>
+              <span>→</span>
+            </button>
+            <button data-target="#contact" class="nav-btn px-6 py-3 hud-panel text-petal hover:text-white font-mono text-xs sm:text-sm tracking-[0.18em] uppercase transition-all">
+              [HUBUNGI SAYA]
+            </button>
+          </div>
+        </div>
+
+        <!-- Right side open viewport window for the 3D Toroidal Rose Glowing Particle Ring + HUD Frame -->
+        <div class="lg:col-span-5 flex flex-col items-center justify-center">
+          <div class="w-full max-w-sm aspect-square rounded-full border border-blush/30 relative flex items-center justify-center p-6 pointer-events-none">
+            <!-- Rotating HUD Ring SVG -->
+            <svg class="w-full h-full animate-[spin_28s_linear_infinite] opacity-55" viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="92" fill="none" stroke="#FF2E93" stroke-width="0.8" stroke-dasharray="6 8" />
+              <circle cx="100" cy="100" r="76" fill="none" stroke="#FFB8DE" stroke-width="0.5" stroke-dasharray="2 12" />
+            </svg>
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-void/90 border border-blush/50 px-3 py-1 text-[10px] font-mono text-petal tracking-widest uppercase whitespace-nowrap">
+              ROSE_TOROIDAL_CORE // ACTIVE
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 02: KEAHLIAN UTAMA / SKILLS (Matrix Grid & Energy Spheres)  -->
+    <!-- =================================================================== -->
+    <section id="skills" data-section-index="2" class="min-h-screen w-full flex items-center justify-center py-28 px-4 sm:px-8 lg:px-16">
+      <div class="max-w-6xl w-full mx-auto space-y-10">
+        
+        <!-- Section Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-crimson/35 pb-6">
+          <div class="space-y-2">
+            <div class="inline-flex items-center gap-2 text-blush font-mono text-xs tracking-[0.25em] uppercase">
+              <span>[02 // KEAHLIAN UTAMA / SKILLS]</span>
+              <span>—</span>
+              <span>3D MATRIX GRID &amp; ENERGY SPHERES</span>
+            </div>
+            <h2 class="font-display font-extrabold text-3xl sm:text-5xl uppercase tracking-wider text-white">
+              KOMPETENSI <span class="text-transparent bg-clip-text bg-gradient-to-r from-crimson via-blush to-petal text-glow-red">&amp; PERANGKAT</span>
+            </h2>
+          </div>
+          <p class="text-xs sm:text-sm font-mono text-silver max-w-md">
+            // Hover atau klik kartu untuk memutar <span class="text-petal">3D Flip Card</span> &amp; melihat rincian metrik HUD Progress Bar.
+          </p>
+        </div>
+
+        <!-- 3 Skills Cards (HUD Progress Bar + 3D Flip Card) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+
+          <!-- SKILL 01: Office (90%): Microsoft Office -->
+          <div class="skill-card-perspective cursor-pointer" onclick="this.classList.toggle('flipped')">
+            <div class="skill-card-inner">
+              <!-- Front Face -->
+              <div class="skill-card-front hud-panel hud-corner p-6 sm:p-7 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="px-2 py-0.5 bg-crimson/20 border border-blush text-petal font-bold">MOD_01</span>
+                  <span class="text-silver">[3D FLIP ↻]</span>
+                </div>
+
+                <div class="my-4 space-y-1">
+                  <div class="text-xs font-mono text-silver uppercase tracking-widest">KATEGORI KEAHLIAN</div>
+                  <h3 class="font-display font-bold text-2xl text-white tracking-wide">Office</h3>
+                  <p class="font-mono text-sm text-blush font-semibold">Microsoft Office</p>
+                </div>
+
+                <!-- HUD Progress Bar -->
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between font-mono text-xs">
+                    <span class="text-silver">TINGKAT PENGUASAAN</span>
+                    <span class="text-petal font-bold text-base">90%</span>
+                  </div>
+                  <div class="w-full h-3 bg-white/10 border border-blush/40 p-0.5">
+                    <div class="hud-bar-fill h-full" style="width: 90%;"></div>
+                  </div>
+                  <div class="flex justify-between text-[10px] font-mono text-silver/80">
+                    <span>OFFICE (90%): MICROSOFT OFFICE</span>
+                    <span class="text-blush">READY</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Back Face (3D Flip Detail) -->
+              <div class="skill-card-back hud-panel hud-corner p-6 sm:p-7 flex flex-col justify-between border-blush bg-crimson/15">
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="text-petal font-bold">// DETAIL KOMPETENSI [01]</span>
+                  <span class="text-white font-bold">90%</span>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="font-display font-bold text-lg text-white">Office (90%): Microsoft Office</h4>
+                  <p class="text-xs sm:text-sm font-mono text-white/90 leading-relaxed">
+                    Pengolahan dokumen administrasi pengajaran, modul interaktif, analisis nilai &amp; rumus terstruktur di Excel, serta presentasi materi pembelajaran modern.
+                  </p>
+                </div>
+                <div class="text-[11px] font-mono text-petal tracking-widest uppercase border-t border-blush/35 pt-2">
+                  WORD • EXCEL • POWERPOINT
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SKILL 02: Desain Grafis (85%): Canva -->
+          <div class="skill-card-perspective cursor-pointer" onclick="this.classList.toggle('flipped')">
+            <div class="skill-card-inner">
+              <!-- Front Face -->
+              <div class="skill-card-front hud-panel hud-corner p-6 sm:p-7 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="px-2 py-0.5 bg-crimson/20 border border-blush text-petal font-bold">MOD_02</span>
+                  <span class="text-silver">[3D FLIP ↻]</span>
+                </div>
+
+                <div class="my-4 space-y-1">
+                  <div class="text-xs font-mono text-silver uppercase tracking-widest">KATEGORI KEAHLIAN</div>
+                  <h3 class="font-display font-bold text-2xl text-white tracking-wide">Desain Grafis</h3>
+                  <p class="font-mono text-sm text-blush font-semibold">Canva</p>
+                </div>
+
+                <!-- HUD Progress Bar -->
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between font-mono text-xs">
+                    <span class="text-silver">TINGKAT PENGUASAAN</span>
+                    <span class="text-petal font-bold text-base">85%</span>
+                  </div>
+                  <div class="w-full h-3 bg-white/10 border border-blush/40 p-0.5">
+                    <div class="hud-bar-fill h-full" style="width: 85%;"></div>
+                  </div>
+                  <div class="flex justify-between text-[10px] font-mono text-silver/80">
+                    <span>DESAIN GRAFIS (85%): CANVA</span>
+                    <span class="text-blush">READY</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Back Face (3D Flip Detail) -->
+              <div class="skill-card-back hud-panel hud-corner p-6 sm:p-7 flex flex-col justify-between border-blush bg-crimson/15">
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="text-petal font-bold">// DETAIL KOMPETENSI [02]</span>
+                  <span class="text-white font-bold">85%</span>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="font-display font-bold text-lg text-white">Desain Grafis (85%): Canva</h4>
+                  <p class="text-xs sm:text-sm font-mono text-white/90 leading-relaxed">
+                    Perancangan visual edukasi, infografis matematika &amp; AI, carousel media sosial, serta materi ajar visual yang estetis dan mudah dipahami siswa maupun audiens digital.
+                  </p>
+                </div>
+                <div class="text-[11px] font-mono text-petal tracking-widest uppercase border-t border-blush/35 pt-2">
+                  VISUAL EDUKASI • INFOGRAFIS • BRANDING
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SKILL 03: Editing Video (75%): CapCut -->
+          <div class="skill-card-perspective cursor-pointer" onclick="this.classList.toggle('flipped')">
+            <div class="skill-card-inner">
+              <!-- Front Face -->
+              <div class="skill-card-front hud-panel hud-corner p-6 sm:p-7 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="px-2 py-0.5 bg-crimson/20 border border-blush text-petal font-bold">MOD_03</span>
+                  <span class="text-silver">[3D FLIP ↻]</span>
+                </div>
+
+                <div class="my-4 space-y-1">
+                  <div class="text-xs font-mono text-silver uppercase tracking-widest">KATEGORI KEAHLIAN</div>
+                  <h3 class="font-display font-bold text-2xl text-white tracking-wide">Editing Video</h3>
+                  <p class="font-mono text-sm text-blush font-semibold">CapCut</p>
+                </div>
+
+                <!-- HUD Progress Bar -->
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between font-mono text-xs">
+                    <span class="text-silver">TINGKAT PENGUASAAN</span>
+                    <span class="text-petal font-bold text-base">75%</span>
+                  </div>
+                  <div class="w-full h-3 bg-white/10 border border-blush/40 p-0.5">
+                    <div class="hud-bar-fill h-full" style="width: 75%;"></div>
+                  </div>
+                  <div class="flex justify-between text-[10px] font-mono text-silver/80">
+                    <span>EDITING VIDEO (75%): CAPCUT</span>
+                    <span class="text-blush">READY</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Back Face (3D Flip Detail) -->
+              <div class="skill-card-back hud-panel hud-corner p-6 sm:p-7 flex flex-col justify-between border-blush bg-crimson/15">
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="text-petal font-bold">// DETAIL KOMPETENSI [03]</span>
+                  <span class="text-white font-bold">75%</span>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="font-display font-bold text-lg text-white">Editing Video (75%): CapCut</h4>
+                  <p class="text-xs sm:text-sm font-mono text-white/90 leading-relaxed">
+                    Produksi video edukasi pendek &amp; panjang, tutorial matematika dan teknologi, transisi dinamis, teks otomatis, dan storytelling visual untuk konten kreator.
+                  </p>
+                </div>
+                <div class="text-[11px] font-mono text-petal tracking-widest uppercase border-t border-blush/35 pt-2">
+                  REELS • EDU-CONTENT • MOTION CAPTIONS
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Consolidated Technical Readout Bar -->
+        <div class="hud-panel p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-crimson shadow-[0_0_8px_#FF2E93]"></span>
+            <span class="text-silver">SUMMARY MATRIX:</span>
+          </div>
+          <div class="flex flex-wrap gap-6 text-white">
+            <span>[01] Office (90%): <strong class="text-blush">Microsoft Office</strong></span>
+            <span>[02] Desain Grafis (85%): <strong class="text-blush">Canva</strong></span>
+            <span>[03] Editing Video (75%): <strong class="text-blush">CapCut</strong></span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 03: PENGALAMAN KERJA / EXPERIENCE (Pink Cyber Corridor)     -->
+    <!-- =================================================================== -->
+    <section id="experience" data-section-index="3" class="min-h-screen w-full flex items-center justify-center py-28 px-4 sm:px-8 lg:px-16">
+      <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Left Technical Index Column -->
+        <div class="lg:col-span-5 space-y-5 lg:sticky lg:top-28">
+          <div class="inline-flex items-center gap-2 text-blush font-mono text-xs tracking-[0.25em] uppercase">
+            <span>[03 // PENGALAMAN KERJA / EXPERIENCE]</span>
+          </div>
+          <h2 class="font-display font-extrabold text-3xl sm:text-5xl uppercase tracking-wider text-white leading-tight">
+            REKAM JEJAK <span class="text-transparent bg-clip-text bg-gradient-to-r from-crimson via-blush to-petal text-glow-red">PROFESIONAL</span>
+          </h2>
+          <p class="font-mono text-xs sm:text-sm text-silver leading-relaxed">
+            // SCENE: LORONG PILAR DATA (ROSE CYBER CORRIDOR). Menyusuri perjalanan karier di bidang pendidikan Matematika, Informatika, dan kreasi konten kreatif.
+          </p>
+
+          <!-- Technical Side Index Indicator -->
+          <div class="hud-panel hud-corner p-5 space-y-3">
+            <div class="text-xs font-mono text-silver flex justify-between border-b border-crimson/30 pb-2">
+              <span>CORRIDOR_PILLAR_INDEX</span>
+              <span class="text-petal font-bold">01 / 03 TOTAL</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 font-mono text-center text-xs">
+              <div class="p-2 border border-blush bg-crimson/25 text-white font-bold">01/03</div>
+              <div class="p-2 border border-crimson/40 bg-void/60 text-petal">02/03</div>
+              <div class="p-2 border border-crimson/40 bg-void/60 text-petal">03/03</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Indexed Experience Cards (01/03, 02/03, 03/03) -->
+        <div class="lg:col-span-7 space-y-6">
+
+          <!-- [01/03] -->
+          <article class="hud-panel hud-corner p-6 sm:p-8 border-l-4 border-l-crimson relative group">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <span class="font-mono font-extrabold text-sm sm:text-base text-petal tracking-widest bg-crimson/20 px-3 py-1 border border-blush/60">
+                [01/03]
+              </span>
+              <span class="font-mono text-xs sm:text-sm text-white bg-white/5 px-3 py-1 border border-blush/25">
+                2025 - Sekarang
+              </span>
+            </div>
+            <h3 class="font-display font-bold text-xl sm:text-2xl text-white group-hover:text-blush transition-colors">
+              Guru Matematika &amp; Informatika
+            </h3>
+            <p class="font-mono text-sm sm:text-base text-silver mt-1">
+              UPT SMKN 1 Makassar <span class="text-blush">(2025 - Sekarang)</span>
+            </p>
+            <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-silver">
+              <span>[01/03] Guru Matematika &amp; Informatika – UPT SMKN 1 Makassar (2025 - Sekarang)</span>
+              <span class="text-petal">ACTIVE</span>
+            </div>
+          </article>
+
+          <!-- [02/03] -->
+          <article class="hud-panel hud-corner p-6 sm:p-8 border-l-4 border-l-blush relative group">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <span class="font-mono font-extrabold text-sm sm:text-base text-petal tracking-widest bg-crimson/20 px-3 py-1 border border-blush/60">
+                [02/03]
+              </span>
+              <span class="font-mono text-xs sm:text-sm text-white bg-white/5 px-3 py-1 border border-blush/25">
+                2023 - 2024
+              </span>
+            </div>
+            <h3 class="font-display font-bold text-xl sm:text-2xl text-white group-hover:text-blush transition-colors">
+              Content Design
+            </h3>
+            <p class="font-mono text-sm sm:text-base text-silver mt-1">
+              WFUFU ART <span class="text-blush">(2023 - 2024)</span>
+            </p>
+            <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-silver">
+              <span>[02/03] Content Design – WFUFU ART (2023 - 2024)</span>
+              <span class="text-silver">VERIFIED</span>
+            </div>
+          </article>
+
+          <!-- [03/03] -->
+          <article class="hud-panel hud-corner p-6 sm:p-8 border-l-4 border-l-petal/70 relative group">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <span class="font-mono font-extrabold text-sm sm:text-base text-petal tracking-widest bg-crimson/20 px-3 py-1 border border-blush/60">
+                [03/03]
+              </span>
+              <span class="font-mono text-xs sm:text-sm text-white bg-white/5 px-3 py-1 border border-blush/25">
+                2020 - 2023
+              </span>
+            </div>
+            <h3 class="font-display font-bold text-xl sm:text-2xl text-white group-hover:text-blush transition-colors">
+              Tentor Matematika
+            </h3>
+            <p class="font-mono text-sm sm:text-base text-silver mt-1">
+              Lentera Ilmu Private <span class="text-blush">(2020 - 2023)</span>
+            </p>
+            <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-silver">
+              <span>[03/03] Tentor Matematika – Lentera Ilmu Private (2020 - 2023)</span>
+              <span class="text-silver">VERIFIED</span>
+            </div>
+          </article>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 04: PENDIDIKAN / EDUCATION (Jaringan Node Geometris 3D)     -->
+    <!-- =================================================================== -->
+    <section id="education" data-section-index="4" class="min-h-screen w-full flex items-center justify-center py-28 px-4 sm:px-8 lg:px-16">
+      <div class="max-w-5xl w-full mx-auto space-y-10">
+        
+        <!-- Header -->
+        <div class="text-left md:text-center space-y-3">
+          <div class="inline-flex items-center gap-2 text-blush font-mono text-xs tracking-[0.25em] uppercase">
+            <span>[04 // PENDIDIKAN / EDUCATION]</span>
+            <span>—</span>
+            <span>ROSE QUARTZ GEOMETRIC NETWORK</span>
+          </div>
+          <h2 class="font-display font-extrabold text-3xl sm:text-5xl uppercase tracking-wider text-white">
+            TIMELINE <span class="text-transparent bg-clip-text bg-gradient-to-r from-crimson via-blush to-petal text-glow-red">PENDIDIKAN</span>
+          </h2>
+          <p class="font-mono text-xs sm:text-sm text-silver max-w-2xl mx-auto">
+            // Struktur node kristal rose-quartz &amp; geometri matematika yang merepresentasikan fondasi akademik dari pendidikan dasar hingga sertifikasi profesi guru.
+          </p>
+        </div>
+
+        <!-- Connected Geometric Timeline -->
+        <div class="relative pl-6 sm:pl-10 border-l-2 border-blush/50 space-y-6">
+
+          <!-- Node 1: Sertifikasi Pendidik (Profesi Guru) -->
+          <div class="relative group">
+            <span class="absolute -left-[31px] sm:-left-[47px] top-6 w-4 h-4 rotate-45 bg-crimson border-2 border-petal shadow-[0_0_15px_#FF2E93]"></span>
+            <div class="hud-panel hud-corner p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-xs font-mono text-blush uppercase tracking-widest">NODE_EDU // 01</div>
+                <h3 class="font-display font-bold text-lg sm:text-xl text-white">
+                  Sertifikasi Pendidik (Profesi Guru)
+                </h3>
+                <p class="font-mono text-sm text-silver">
+                  Universitas Muhammadiyah Parepare
+                </p>
+              </div>
+              <div class="shrink-0">
+                <span class="inline-block font-mono font-bold text-xs sm:text-sm text-white bg-crimson/25 border border-blush px-3.5 py-1.5">
+                  Lulus 2023
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node 2: S-1 (Strata 1) -->
+          <div class="relative group">
+            <span class="absolute -left-[31px] sm:-left-[47px] top-6 w-4 h-4 rotate-45 bg-void border-2 border-blush group-hover:bg-crimson transition-colors shadow-[0_0_10px_#FF2E93]"></span>
+            <div class="hud-panel hud-corner p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-xs font-mono text-blush uppercase tracking-widest">NODE_EDU // 02</div>
+                <h3 class="font-display font-bold text-lg sm:text-xl text-white">
+                  S-1 (Strata 1)
+                </h3>
+                <p class="font-mono text-sm text-silver">
+                  Universitas Muhammadiyah Makassar
+                </p>
+              </div>
+              <div class="shrink-0">
+                <span class="inline-block font-mono font-bold text-xs sm:text-sm text-white bg-crimson/25 border border-blush px-3.5 py-1.5">
+                  Lulus 2021
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node 3: SMA -->
+          <div class="relative group">
+            <span class="absolute -left-[31px] sm:-left-[47px] top-6 w-4 h-4 rotate-45 bg-void border-2 border-blush group-hover:bg-crimson transition-colors shadow-[0_0_10px_#FF2E93]"></span>
+            <div class="hud-panel hud-corner p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-xs font-mono text-blush uppercase tracking-widest">NODE_EDU // 03</div>
+                <h3 class="font-display font-bold text-lg sm:text-xl text-white">
+                  SMA
+                </h3>
+                <p class="font-mono text-sm text-silver">
+                  SMAN 3 Poso
+                </p>
+              </div>
+              <div class="shrink-0">
+                <span class="inline-block font-mono font-bold text-xs sm:text-sm text-white bg-crimson/25 border border-blush px-3.5 py-1.5">
+                  Lulus 2016
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node 4: SMP -->
+          <div class="relative group">
+            <span class="absolute -left-[31px] sm:-left-[47px] top-6 w-4 h-4 rotate-45 bg-void border-2 border-blush group-hover:bg-crimson transition-colors shadow-[0_0_10px_#FF2E93]"></span>
+            <div class="hud-panel hud-corner p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-xs font-mono text-blush uppercase tracking-widest">NODE_EDU // 04</div>
+                <h3 class="font-display font-bold text-lg sm:text-xl text-white">
+                  SMP
+                </h3>
+                <p class="font-mono text-sm text-silver">
+                  SMPN 4 Mansoben
+                </p>
+              </div>
+              <div class="shrink-0">
+                <span class="inline-block font-mono font-bold text-xs sm:text-sm text-white bg-crimson/25 border border-blush px-3.5 py-1.5">
+                  Lulus 2013
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node 5: SD -->
+          <div class="relative group">
+            <span class="absolute -left-[31px] sm:-left-[47px] top-6 w-4 h-4 rotate-45 bg-void border-2 border-blush group-hover:bg-crimson transition-colors shadow-[0_0_10px_#FF2E93]"></span>
+            <div class="hud-panel hud-corner p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-xs font-mono text-blush uppercase tracking-widest">NODE_EDU // 05</div>
+                <h3 class="font-display font-bold text-lg sm:text-xl text-white">
+                  SD
+                </h3>
+                <p class="font-mono text-sm text-silver">
+                  SDN 01 Bonepute
+                </p>
+              </div>
+              <div class="shrink-0">
+                <span class="inline-block font-mono font-bold text-xs sm:text-sm text-white bg-crimson/25 border border-blush px-3.5 py-1.5">
+                  Lulus 2010
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 05: KONTAK & MEDIA SOSIAL (Terminal Grid Akhir)             -->
+    <!-- =================================================================== -->
+    <section id="contact" data-section-index="5" class="min-h-screen w-full flex items-center justify-center py-28 px-4 sm:px-8 lg:px-16">
+      <div class="max-w-5xl w-full mx-auto space-y-10">
+
+        <!-- Hologram Terminal Panel -->
+        <div class="hud-panel hud-corner p-6 sm:p-10 md:p-12 border-blush/50 shadow-neon space-y-8">
+          
+          <!-- Terminal Top Status Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-crimson/35 pb-4 text-xs font-mono">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 bg-crimson rounded-full animate-ping"></span>
+              <span class="text-petal font-bold tracking-widest">[05 // KONTAK &amp; MEDIA SOSIAL — TERMINAL GRID AKHIR]</span>
+            </div>
+            <span class="text-silver">CHANNEL_STATUS: OPEN_FOR_COLLABORATION</span>
+          </div>
+
+          <div class="space-y-3 text-left md:text-center max-w-2xl mx-auto">
+            <h2 class="font-display font-black text-3xl sm:text-5xl uppercase tracking-wider text-white">
+              TERHUBUNG DENGAN <span class="text-transparent bg-clip-text bg-gradient-to-r from-crimson via-blush to-petal text-glow-red">NINI AFRIYANI</span>
+            </h2>
+            <p class="font-mono text-xs sm:text-sm text-silver leading-relaxed">
+              Tertarik berkolaborasi dalam edukasi Matematika &amp; Informatika, pembuatan konten digital, pemanfaatan AI untuk pembelajaran, atau undangan berbagi wawasan? Hubungi melalui kanal resmi di bawah ini:
+            </p>
+          </div>
+
+          <!-- Interactive Technical Box Buttons with Icons -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            <!-- Email Button -->
+            <a href="mailto:afriyanini@gmail.com" class="hud-panel hud-corner p-6 group flex flex-col justify-between gap-5 hover:bg-crimson/15 transition-all">
+              <div class="flex items-center justify-between">
+                <div class="w-12 h-12 border border-blush/60 bg-crimson/15 flex items-center justify-center text-blush group-hover:bg-crimson group-hover:text-white transition-all shadow-neon">
+                  <!-- Email SVG Icon -->
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <span class="text-[11px] font-mono text-silver group-hover:text-petal transition-colors">CH_01 // MAILTO ↗</span>
+              </div>
+              <div class="space-y-1">
+                <div class="text-xs font-mono text-silver uppercase tracking-widest">Email</div>
+                <div class="font-mono font-bold text-sm sm:text-base text-white break-all group-hover:text-petal transition-colors">
+                  afriyanini@gmail.com
+                </div>
+              </div>
+            </a>
+
+            <!-- GitHub Button -->
+            <a href="https://github.com/afriyanini" target="_blank" rel="noopener noreferrer" class="hud-panel hud-corner p-6 group flex flex-col justify-between gap-5 hover:bg-crimson/15 transition-all">
+              <div class="flex items-center justify-between">
+                <div class="w-12 h-12 border border-blush/60 bg-crimson/15 flex items-center justify-center text-blush group-hover:bg-crimson group-hover:text-white transition-all shadow-neon">
+                  <!-- GitHub SVG Icon -->
+                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                  </svg>
+                </div>
+                <span class="text-[11px] font-mono text-silver group-hover:text-petal transition-colors">CH_02 // GITHUB ↗</span>
+              </div>
+              <div class="space-y-1">
+                <div class="text-xs font-mono text-silver uppercase tracking-widest">GitHub</div>
+                <div class="font-mono font-bold text-sm sm:text-base text-white break-all group-hover:text-petal transition-colors">
+                  https://github.com/afriyanini
+                </div>
+              </div>
+            </a>
+
+            <!-- Instagram Button -->
+            <a href="https://instagram.com/afriyanini" target="_blank" rel="noopener noreferrer" class="hud-panel hud-corner p-6 group flex flex-col justify-between gap-5 hover:bg-crimson/15 transition-all">
+              <div class="flex items-center justify-between">
+                <div class="w-12 h-12 border border-blush/60 bg-crimson/15 flex items-center justify-center text-blush group-hover:bg-crimson group-hover:text-white transition-all shadow-neon">
+                  <!-- Instagram SVG Icon -->
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                  </svg>
+                </div>
+                <span class="text-[11px] font-mono text-silver group-hover:text-petal transition-colors">CH_03 // SOCIAL ↗</span>
+              </div>
+              <div class="space-y-1">
+                <div class="text-xs font-mono text-silver uppercase tracking-widest">Instagram</div>
+                <div class="font-mono font-bold text-sm sm:text-base text-white break-all group-hover:text-petal transition-colors">
+                  @afriyanini
+                </div>
+                <div class="text-[11px] font-mono text-silver break-all">
+                  https://instagram.com/afriyanini
+                </div>
+              </div>
+            </a>
+
+          </div>
+
+          <!-- Footer / Return to Top -->
+          <div class="pt-6 border-t border-crimson/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-silver">
+            <div>
+              © 2026 <span class="text-petal font-bold">NINI AFRIYANI</span> // NINI.NETWORK — ALL SYSTEMS OPERATIONAL.
+            </div>
+            <button data-target="#about" class="nav-btn px-4 py-2 border border-blush/50 text-petal hover:bg-crimson hover:text-white transition-all uppercase tracking-widest">
+              [▲ KEMBALI KE ATAS / 01 ABOUT]
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- WEBGL THREE.JS + GSAP SCROLLYTELLING ENGINE (FEMININE PINK EDITION)   -->
+  <!-- ===================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+      // -------------------------------------------------------------------
+      // 1. INITIALIZE THREE.JS SCENE, CAMERA & RENDERER
+      // -------------------------------------------------------------------
+      const container = document.getElementById('webgl-container');
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0408);
+      scene.fog = new THREE.FogExp2(0x0a0408, 0.017);
+
+      const camera = new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        300
+      );
+      camera.position.set(0, 0, 12);
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: 'high-performance'
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      // Helper: Create procedural radial glow texture for additive neon particles/halos
+      function createGlowTexture(innerHex, midRgba) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        grad.addColorStop(0, '#FFFFFF');
+        grad.addColorStop(0.24, innerHex);
+        grad.addColorStop(0.58, midRgba);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 128, 128);
+        return new THREE.CanvasTexture(canvas);
+      }
+
+      const pinkGlowTex = createGlowTexture('#FF2E93', 'rgba(255, 46, 147, 0.30)');
+      const blushGlowTex = createGlowTexture('#FFB8DE', 'rgba(255, 133, 192, 0.28)');
+
+      // Lights (Warm Rose & Soft Orchid Illumination)
+      const ambientLight = new THREE.AmbientLight(0x3a1028, 1.8);
+      scene.add(ambientLight);
+
+      const cameraLight = new THREE.PointLight(0xff4da6, 3.0, 50);
+      scene.add(cameraLight);
+
+      // -------------------------------------------------------------------
+      // 2. BUILD THE 5 3D SCENES ALONG THE Z-AXIS
+      // -------------------------------------------------------------------
+
+      // ===================================================================
+      // SCENE 01: TOROIDAL ROSE-PINK GLOWING PARTICLE CUBE RING (Z = 0)
+      // ===================================================================
+      const scene1Group = new THREE.Group();
+      scene1Group.position.set(2.2, 0, 0);
+      scene.add(scene1Group);
+
+      // Instanced Cubes forming a Shimmering Rose-Pink & Sakura Toroidal Ring
+      const torusCubeCount = 750;
+      const cubeGeo = new THREE.BoxGeometry(0.16, 0.16, 0.16);
+      const cubeMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xff2e93,
+        emissiveIntensity: 0.75,
+        roughness: 0.18,
+        metalness: 0.75
+      });
+      const torusInstanced = new THREE.InstancedMesh(cubeGeo, cubeMat, torusCubeCount);
+      const dummy = new THREE.Object3D();
+      const paletteColors = [
+        new THREE.Color(0xff2e93), // Hot Cyber Rose
+        new THREE.Color(0xff6bb5), // Vibrant Pink
+        new THREE.Color(0xff99cc), // Soft Sakura Blush
+        new THREE.Color(0xffcce6), // Pearl Petal Pink
+        new THREE.Color(0xe879f9)  // Orchid Lavender-Pink
+      ];
+
+      const majorR = 5.2;
+      const minorR = 1.45;
+      for (let i = 0; i < torusCubeCount; i++) {
+        const u = (i / torusCubeCount) * Math.PI * 2 * 13;
+        const v = (i / torusCubeCount) * Math.PI * 2;
+        const jitter = (Math.random() - 0.5) * 0.45;
+        const r = minorR + jitter;
+
+        const x = (majorR + r * Math.cos(u)) * Math.cos(v);
+        const y = (majorR + r * Math.cos(u)) * Math.sin(v);
+        const z = r * Math.sin(u);
+        const scale = 0.45 + Math.random() * 1.35;
+
+        dummy.position.set(x, y, z);
+        dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+        dummy.scale.setScalar(scale);
+        dummy.updateMatrix();
+        torusInstanced.setMatrixAt(i, dummy.matrix);
+        torusInstanced.setColorAt(i, paletteColors[i % paletteColors.length]);
+      }
+      if (torusInstanced.instanceColor) torusInstanced.instanceColor.needsUpdate = true;
+      scene1Group.add(torusInstanced);
+
+      // Inner Wireframe Torus Core (Blush Pink)
+      const innerTorusGeo = new THREE.TorusGeometry(5.2, 0.75, 16, 80);
+      const innerTorusMat = new THREE.MeshBasicMaterial({
+        color: 0xff85c0,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.24,
+        blending: THREE.AdditiveBlending
+      });
+      const innerTorusMesh = new THREE.Mesh(innerTorusGeo, innerTorusMat);
+      scene1Group.add(innerTorusMesh);
+
+      // Glowing Halo Particles around the Torus
+      const haloGeo = new THREE.BufferGeometry();
+      const haloCount = 450;
+      const haloPos = new Float32Array(haloCount * 3);
+      for (let i = 0; i < haloCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const rad = majorR + (Math.random() - 0.5) * 3.4;
+        haloPos[i * 3] = Math.cos(angle) * rad;
+        haloPos[i * 3 + 1] = Math.sin(angle) * rad;
+        haloPos[i * 3 + 2] = (Math.random() - 0.5) * 3.0;
+      }
+      haloGeo.setAttribute('position', new THREE.BufferAttribute(haloPos, 3));
+      const haloMat = new THREE.PointsMaterial({
+        size: 0.68,
+        map: pinkGlowTex,
+        transparent: true,
+        opacity: 0.88,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const haloPoints = new THREE.Points(haloGeo, haloMat);
+      scene1Group.add(haloPoints);
+
+      // ===================================================================
+      // SCENE 02: 3D MATRIX GRID SPACE & GLOWING ENERGY SPHERES (Z = -48)
+      // ===================================================================
+      const scene2Group = new THREE.Group();
+      scene2Group.position.set(0, 0, -48);
+      scene.add(scene2Group);
+
+      // Floor & Ceiling Sci-Fi Matrix Grids (Rose & Plum-Pink)
+      const gridFloor = new THREE.GridHelper(60, 40, 0xff2e93, 0x4a1230);
+      gridFloor.position.y = -6.5;
+      scene2Group.add(gridFloor);
+
+      const gridCeiling = new THREE.GridHelper(60, 40, 0xff85c0, 0x4a1230);
+      gridCeiling.position.y = 6.5;
+      scene2Group.add(gridCeiling);
+
+      // Glowing Energy Spheres (Representing Core Skills)
+      const energySpheres = [];
+      const sphereConfigs = [
+        { pos: [-6.5, 1.8, -2], radius: 1.45, color: 0xff2e93 },
+        { pos: [0, -1.6, -6], radius: 1.75, color: 0xff85c0 },
+        { pos: [6.8, 1.5, -3], radius: 1.35, color: 0xff2e93 },
+        { pos: [-4.2, -2.5, 4], radius: 0.85, color: 0xffb8de },
+        { pos: [4.8, 2.6, 3], radius: 0.95, color: 0xe879f9 }
+      ];
+
+      sphereConfigs.forEach((cfg, idx) => {
+        const sGroup = new THREE.Group();
+        sGroup.position.set(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
+
+        // Core Glowing Sphere
+        const sGeo = new THREE.SphereGeometry(cfg.radius, 24, 24);
+        const sMat = new THREE.MeshBasicMaterial({
+          color: cfg.color,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.58
+        });
+        const sMesh = new THREE.Mesh(sGeo, sMat);
+        sGroup.add(sMesh);
+
+        // Inner Solid Energy Core (Pearl Pink)
+        const coreGeo = new THREE.SphereGeometry(cfg.radius * 0.55, 16, 16);
+        const coreMat = new THREE.MeshBasicMaterial({
+          color: 0xffb8de
+        });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        sGroup.add(coreMesh);
+
+        // Additive Glow Sprite
+        const spriteMat = new THREE.SpriteMaterial({
+          map: idx % 2 === 0 ? pinkGlowTex : blushGlowTex,
+          color: cfg.color,
+          transparent: true,
+          opacity: 0.92,
+          blending: THREE.AdditiveBlending
+        });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.scale.setScalar(cfg.radius * 4.6);
+        sGroup.add(sprite);
+
+        // Orbital Ring
+        const ringGeo = new THREE.RingGeometry(cfg.radius * 1.25, cfg.radius * 1.32, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xffe4f2,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.5
+        });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.rotation.x = Math.PI / 3;
+        sGroup.add(ringMesh);
+
+        scene2Group.add(sGroup);
+        energySpheres.push({ group: sGroup, mesh: sMesh, ring: ringMesh, phase: idx * 1.3 });
+      });
+
+      // ===================================================================
+      // SCENE 03: LORONG PILAR DATA / ROSE CYBER CORRIDOR (Z = -105)
+      // ===================================================================
+      const scene3Group = new THREE.Group();
+      scene3Group.position.set(0, 0, -105);
+      scene.add(scene3Group);
+
+      const pillarPairs = 9;
+      const pillarSpacing = 5.5;
+      const pillarBodyGeo = new THREE.BoxGeometry(1.4, 14, 1.4);
+      const pillarBodyMat = new THREE.MeshStandardMaterial({
+        color: 0x160711,
+        roughness: 0.28,
+        metalness: 0.85
+      });
+      const neonStripGeo = new THREE.BoxGeometry(0.18, 13.6, 0.18);
+      const neonStripMat = new THREE.MeshBasicMaterial({
+        color: 0xff2e93
+      });
+      const softNeonMat = new THREE.MeshBasicMaterial({
+        color: 0xff85c0
+      });
+      const topBeamGeo = new THREE.BoxGeometry(15.4, 0.3, 0.4);
+
+      for (let i = 0; i < pillarPairs; i++) {
+        const zOffset = (i - pillarPairs / 2) * pillarSpacing;
+        const stripMaterial = i % 2 === 0 ? neonStripMat : softNeonMat;
+
+        // Left Pillar
+        const leftPillar = new THREE.Mesh(pillarBodyGeo, pillarBodyMat);
+        leftPillar.position.set(-7.2, 0, zOffset);
+        scene3Group.add(leftPillar);
+
+        const leftNeon = new THREE.Mesh(neonStripGeo, stripMaterial);
+        leftNeon.position.set(-6.4, 0, zOffset);
+        scene3Group.add(leftNeon);
+
+        // Right Pillar
+        const rightPillar = new THREE.Mesh(pillarBodyGeo, pillarBodyMat);
+        rightPillar.position.set(7.2, 0, zOffset);
+        scene3Group.add(rightPillar);
+
+        const rightNeon = new THREE.Mesh(neonStripGeo, stripMaterial);
+        rightNeon.position.set(6.4, 0, zOffset);
+        scene3Group.add(rightNeon);
+
+        // Overhead Cyber Arch Beam
+        const topBeam = new THREE.Mesh(topBeamGeo, stripMaterial);
+        topBeam.position.set(0, 6.6, zOffset);
+        scene3Group.add(topBeam);
+      }
+
+      // Corridor Floor Center Runway Lines
+      const runwayGeo = new THREE.PlaneGeometry(1.2, 52, 2, 20);
+      const runwayMat = new THREE.MeshBasicMaterial({
+        color: 0xff85c0,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.38
+      });
+      const runwayMesh = new THREE.Mesh(runwayGeo, runwayMat);
+      runwayMesh.rotation.x = -Math.PI / 2;
+      runwayMesh.position.y = -6.8;
+      scene3Group.add(runwayMesh);
+
+      // ===================================================================
+      // SCENE 04: JARINGAN NODE GEOMETRIS 3D / ROSE QUARTZ CRYSTALS (Z = -160)
+      // ===================================================================
+      const scene4Group = new THREE.Group();
+      scene4Group.position.set(2.0, 0, -160);
+      scene.add(scene4Group);
+
+      const crystalNodes = [];
+      const nodeCoords = [
+        [-6, 3.2, 5],
+        [-2.5, -2.8, 3],
+        [3.5, 2.6, 2],
+        [6.5, -1.8, 0],
+        [0, 0.8, -2],
+        [-4.8, 1.5, -5],
+        [4.2, 3.5, -6],
+        [-1.5, -3.5, -7],
+        [5.5, -2.5, -8],
+        [0, 3.8, 4]
+      ];
+
+      const crystalGeos = [
+        new THREE.IcosahedronGeometry(1.05, 0),
+        new THREE.OctahedronGeometry(1.15, 0),
+        new THREE.DodecahedronGeometry(1.0, 0)
+      ];
+      const crystalWireMat = new THREE.MeshBasicMaterial({
+        color: 0xff85c0,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.88
+      });
+      const crystalCoreMat = new THREE.MeshStandardMaterial({
+        color: 0x3b0a26,
+        emissive: 0xff2e93,
+        emissiveIntensity: 0.5,
+        flatShading: true
+      });
+
+      nodeCoords.forEach((pt, idx) => {
+        const cGroup = new THREE.Group();
+        cGroup.position.set(pt[0], pt[1], pt[2]);
+
+        const geo = crystalGeos[idx % crystalGeos.length];
+        const wire = new THREE.Mesh(geo, crystalWireMat);
+        const solid = new THREE.Mesh(geo, crystalCoreMat);
+        solid.scale.setScalar(0.72);
+
+        cGroup.add(wire);
+        cGroup.add(solid);
+        scene4Group.add(cGroup);
+        crystalNodes.push(cGroup);
+      });
+
+      // Connect geometric nodes with constellation lines
+      const linePositions = [];
+      for (let i = 0; i < nodeCoords.length; i++) {
+        for (let j = i + 1; j < nodeCoords.length; j++) {
+          const a = nodeCoords[i];
+          const b = nodeCoords[j];
+          const dist = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+          if (dist < 9.5) {
+            linePositions.push(a[0], a[1], a[2], b[0], b[1], b[2]);
+          }
+        }
+      }
+      const netLineGeo = new THREE.BufferGeometry();
+      netLineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+      const netLineMat = new THREE.LineBasicMaterial({
+        color: 0xff5ca8,
+        transparent: true,
+        opacity: 0.42
+      });
+      const netLines = new THREE.LineSegments(netLineGeo, netLineMat);
+      scene4Group.add(netLines);
+
+      // ===================================================================
+      // SCENE 05: TERMINAL GRID AKHIR / HOLOGRAM PORTAL (Z = -215)
+      // ===================================================================
+      const scene5Group = new THREE.Group();
+      scene5Group.position.set(0, 0, -215);
+      scene.add(scene5Group);
+
+      // Hologram Backplane Grid
+      const holoPlaneGeo = new THREE.PlaneGeometry(24, 14, 24, 14);
+      const holoPlaneMat = new THREE.MeshBasicMaterial({
+        color: 0xff2e93,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.24
+      });
+      const holoPlane = new THREE.Mesh(holoPlaneGeo, holoPlaneMat);
+      scene5Group.add(holoPlane);
+
+      // Concentric Octagonal/Circular Hologram Rings
+      const portalRings = [];
+      [3.2, 5.0, 6.8].forEach((r, idx) => {
+        const rGeo = new THREE.RingGeometry(r, r + 0.08, idx === 1 ? 8 : 48);
+        const rMat = new THREE.MeshBasicMaterial({
+          color: idx % 2 === 0 ? 0xff2e93 : 0xffb8de,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.5
+        });
+        const rMesh = new THREE.Mesh(rGeo, rMat);
+        rMesh.position.z = 1.2 + idx * 0.4;
+        scene5Group.add(rMesh);
+        portalRings.push(rMesh);
+      });
+
+      // Global Ambient Sakura-Pink Dust Particles along the entire Z-tunnel
+      const dustCount = 1200;
+      const dustGeo = new THREE.BufferGeometry();
+      const dustPos = new Float32Array(dustCount * 3);
+      for (let i = 0; i < dustCount; i++) {
+        dustPos[i * 3] = (Math.random() - 0.5) * 40;
+        dustPos[i * 3 + 1] = (Math.random() - 0.5) * 24;
+        dustPos[i * 3 + 2] = 20 - Math.random() * 255;
+      }
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+      const dustMat = new THREE.PointsMaterial({
+        size: 0.38,
+        map: blushGlowTex,
+        transparent: true,
+        opacity: 0.6,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const dustParticles = new THREE.Points(dustGeo, dustMat);
+      scene.add(dustParticles);
+
+      // -------------------------------------------------------------------
+      // 3. CAMERA SCRUBBING + CUSTOM 3D FLIP SCROLLBAR LOGIC
+      // -------------------------------------------------------------------
+      const cameraWaypoints = [
+        // 01 ABOUT: Front of Toroidal Particle Ring
+        { z: 12, x: 0, y: 0, rotZ: 0, rotY: 0, name: 'TORUS_CORE', desc: 'SCENE 01: TOROIDAL ROSE PARTICLE RING' },
+        // 02 SKILLS: Fly-through Torus into 3D Matrix Grid & Energy Spheres
+        { z: -36, x: 0, y: 0.3, rotZ: 0.03, rotY: 0, name: 'MATRIX_GRID', desc: 'SCENE 02: 3D MATRIX GRID & GLOWING SPHERES' },
+        // 03 EXPERIENCE: Rose Cyber Corridor
+        { z: -92, x: 0, y: 0, rotZ: 0, rotY: 0, name: 'CYBER_CORRIDOR', desc: 'SCENE 03: ROSE CYBER DATA PILLAR CORRIDOR' },
+        // 04 EDUCATION: Geometric Node Constellation
+        { z: -146, x: 1.6, y: 0.4, rotZ: -0.04, rotY: -0.06, name: 'GEO_NETWORK', desc: 'SCENE 04: 3D ROSE QUARTZ CRYSTAL NODE NETWORK' },
+        // 05 CONTACT: Final Hologram Terminal Grid
+        { z: -200, x: 0, y: 0, rotZ: 0, rotY: 0, name: 'TERMINAL_GRID', desc: 'SCENE 05: HOLOGRAPHIC TERMINAL GRID PORTAL' }
+      ];
+
+      let scrollProgress = 0; // 0.0 to 1.0
+      const targetCam = { x: 0, y: 0, z: 12, rotZ: 0, rotY: 0 };
+      const mouseParallax = { x: 0, y: 0, targetX: 0, targetY: 0 };
+
+      // UI Elements for HUD & Custom 3D Flip Scrollbar
+      const hudZCoord = document.getElementById('hud-z-coord');
+      const hudSecName = document.getElementById('hud-sec-name');
+      const telemetryDesc = document.getElementById('telemetry-scene-desc');
+      const scrollbarFill = document.getElementById('scrollbar-progress-fill');
+      const scrollbarPct = document.getElementById('scrollbar-pct');
+      const flipCube = document.getElementById('scrollbar-flip-cube');
+      const navButtons = document.querySelectorAll('header .nav-btn');
+      const scrollTicks = document.querySelectorAll('.scroll-tick span');
+
+      let currentSectionIdx = 0; // 0..4
+      let flipSteps = 0;
+
+      function updateActiveSectionUI(newIdx) {
+        if (newIdx === currentSectionIdx) return;
+        const direction = newIdx > currentSectionIdx ? 1 : -1;
+        flipSteps += direction;
+        currentSectionIdx = newIdx;
+
+        // Update the face text on the newly revealed face of the 3D Flip Cube
+        const faceIndex = ((flipSteps % 4) + 4) % 4;
+        const faceEl = document.getElementById('flip-face-' + faceIndex);
+        if (faceEl) {
+          faceEl.textContent = '0' + (newIdx + 1);
+        }
+
+        // Perform 3D rotation along X-axis
+        flipCube.style.transform = `rotateX(${flipSteps * 90}deg)`;
+
+        // Update Top HUD Nav active state
+        navButtons.forEach((btn, idx) => {
+          btn.classList.toggle('active', idx === newIdx);
+        });
+
+        // Update Right Scrollbar Ticks
+        scrollTicks.forEach((tick, idx) => {
+          if (idx === newIdx) {
+            tick.className = 'w-2.5 h-2.5 rotate-45 border border-petal bg-crimson shadow-[0_0_10px_#FF2E93] transition-all';
+          } else if (idx < newIdx) {
+            tick.className = 'w-2 h-2 rotate-45 border border-blush bg-crimson/55 transition-all';
+          } else {
+            tick.className = 'w-2 h-2 rotate-45 border border-blush/60 bg-void transition-all';
+          }
+        });
+
+        // Update Telemetry Labels
+        const wp = cameraWaypoints[newIdx];
+        if (wp) {
+          if (hudSecName) hudSecName.textContent = wp.name;
+          if (telemetryDesc) telemetryDesc.textContent = wp.desc;
+        }
+      }
+
+      // Compute camera target from normalized scrollProgress [0..1]
+      function updateCameraFromScroll(progress) {
+        const clamped = Math.max(0, Math.min(1, progress));
+        const segments = cameraWaypoints.length - 1; // 4 segments
+        const scaled = clamped * segments;
+        const idx = Math.min(Math.floor(scaled), segments - 1);
+        const t = scaled - idx;
+
+        // Smoothstep interpolation between waypoints
+        const smoothT = t * t * (3 - 2 * t);
+        const a = cameraWaypoints[idx];
+        const b = cameraWaypoints[idx + 1];
+
+        targetCam.z = THREE.MathUtils.lerp(a.z, b.z, smoothT);
+        targetCam.x = THREE.MathUtils.lerp(a.x, b.x, smoothT);
+        targetCam.y = THREE.MathUtils.lerp(a.y, b.y, smoothT);
+        targetCam.rotZ = THREE.MathUtils.lerp(a.rotZ, b.rotZ, smoothT);
+        targetCam.rotY = THREE.MathUtils.lerp(a.rotY, b.rotY, smoothT);
+
+        // Update Scrollbar Progress Fill & Percentage
+        const pct = Math.round(clamped * 100);
+        if (scrollbarFill) scrollbarFill.style.height = `${pct}%`;
+        if (scrollbarPct) scrollbarPct.textContent = String(pct).padStart(2, '0') + '%';
+
+        // Determine active section (0..4)
+        const activeIdx = Math.min(4, Math.max(0, Math.round(clamped * 4)));
+        updateActiveSectionUI(activeIdx);
+      }
+
+      // Bind scroll listener via GSAP ScrollTrigger on document body
+      ScrollTrigger.create({
+        trigger: document.body,
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: true,
+        onUpdate: (self) => {
+          scrollProgress = self.progress;
+          updateCameraFromScroll(scrollProgress);
+        }
+      });
+
+      // Smooth Navigation Click Handler
+      document.querySelectorAll('[data-target]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetSelector = btn.getAttribute('data-target');
+          const targetEl = document.querySelector(targetSelector);
+          if (targetEl) {
+            gsap.to(window, {
+              duration: 1.25,
+              scrollTo: { y: targetEl, autoKill: true },
+              ease: 'power3.inOut'
+            });
+          }
+        });
+      });
+
+      // Mouse Move Parallax & Custom Reticle
+      const cursorReticle = document.getElementById('cursor-reticle');
+      window.addEventListener('mousemove', (e) => {
+        mouseParallax.targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+        mouseParallax.targetY = -(e.clientY / window.innerHeight - 0.5) * 2;
+
+        if (cursorReticle) {
+          cursorReticle.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
+        }
+      });
+
+      // -------------------------------------------------------------------
+      // 4. RENDER LOOP (60FPS WITH SMOOTH CAMERA DAMPING)
+      // -------------------------------------------------------------------
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const elapsed = clock.getElapsedTime();
+
+        // Smooth mouse parallax damping
+        mouseParallax.x = THREE.MathUtils.lerp(mouseParallax.x, mouseParallax.targetX, 0.06);
+        mouseParallax.y = THREE.MathUtils.lerp(mouseParallax.y, mouseParallax.targetY, 0.06);
+
+        // Smooth Camera Scrubbing Damping (Position Z, X, Y & Rotation)
+        camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetCam.z, 0.075);
+        camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetCam.x + mouseParallax.x * 0.85, 0.075);
+        camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetCam.y + mouseParallax.y * 0.55, 0.075);
+
+        camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, targetCam.rotZ - mouseParallax.x * 0.03, 0.075);
+        camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, targetCam.rotY - mouseParallax.x * 0.04, 0.075);
+        camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, mouseParallax.y * 0.03, 0.075);
+
+        // Keep PointLight with camera
+        cameraLight.position.copy(camera.position);
+
+        // Live Z-Coordinate HUD Readout
+        if (hudZCoord) {
+          hudZCoord.textContent = Math.abs(camera.position.z - 12).toFixed(1).padStart(5, '0');
+        }
+
+        // Animate Scene 01: Toroidal Rose-Pink Glowing Particle Cube Ring
+        scene1Group.rotation.z = elapsed * 0.18;
+        scene1Group.rotation.y = Math.sin(elapsed * 0.35) * 0.28 + mouseParallax.x * 0.25;
+        scene1Group.rotation.x = Math.cos(elapsed * 0.25) * 0.18 - mouseParallax.y * 0.2;
+        innerTorusMesh.rotation.z = -elapsed * 0.32;
+
+        // Animate Scene 02: Energy Spheres
+        energySpheres.forEach((item) => {
+          item.group.position.y += Math.sin(elapsed * 1.8 + item.phase) * 0.004;
+          item.mesh.rotation.y = elapsed * 0.5 + item.phase;
+          item.mesh.rotation.x = elapsed * 0.3;
+          item.ring.rotation.z = -elapsed * 0.8;
+        });
+
+        // Animate Scene 04: Geometric Crystal Nodes
+        crystalNodes.forEach((node, idx) => {
+          node.rotation.x = elapsed * 0.4 + idx;
+          node.rotation.y = elapsed * 0.55 + idx * 0.5;
+        });
+        scene4Group.rotation.y = Math.sin(elapsed * 0.2) * 0.12;
+
+        // Animate Scene 05: Final Terminal Hologram Portal Rings
+        portalRings.forEach((ring, idx) => {
+          ring.rotation.z = elapsed * (idx % 2 === 0 ? 0.25 : -0.35);
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      // Responsive Resize Handler
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    })();
+  </script>
+</body>
+</html>
